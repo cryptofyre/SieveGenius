@@ -1,7 +1,7 @@
 require ["fileinto", "imap4flags"];
 
 # !!!YOU WILL NEED TO CREATE THE LABEL TAGS FOR THIS FILTER TO WORK!!!
-# Important, Billing, Newsletters, Security, Social, Work, Shopping, Travel, Entertainment, Development, Shipping
+# Important, Billing, Newsletters, Security, Social, Work, Shopping, Travel, Entertainment, Development, Shipping, Promotions
 
 # I am not responsible for your inbox being split apart like my wife, use at your own discretion.
 # - cryptofyre 2025
@@ -107,7 +107,7 @@ if header :contains ["From"] ["peacocktv.com", "primevideo.com", "netflix.com", 
 
 # ===== DEVELOPMENT & OPEN SOURCE =====
 if anyof(
-    header :contains ["From"] ["opencollective.com", "gitlab.com", "bitbucket.org", "npm.com", "digitalocean.com", "stackoverflow.com", "docker.com", "linux.com", "apache.org", "golang.org", "python.org", "dev@", "developer@"],
+    header :contains ["From"] ["opencollective.com", "gitlab.com", "bitbucket.org", "npm.com", "digitalocean.com", "stackoverflow.com", "docker.com", "linux.com", "apache.org", "golang.org", "python.org", "dev@", "developer@", "grafana.com"],
     
     # GitHub emails that aren't work-related
     allof(
@@ -119,16 +119,43 @@ if anyof(
     stop;
 }
 
+# ===== SYSTEM ALERTS & NOTIFICATIONS =====
+if anyof(
+    header :contains ["From"] ["notify@broadcastify.com"],
+    header :contains "Subject" ["System OFFLINE", "Alert", "Notification", "Status Update"]
+) {
+    fileinto "Important";
+    addflag "\\Flagged";
+    stop;
+}
+
 # ===== PROMOTIONS/MARKETING EMAILS =====
 if anyof(
     # Clear promotional language in subject
-    header :contains "Subject" ["% off", "discount", "offer", "sale", "deal", "save", "limited time", "exclusive", "don't miss", "last day", "flash sale"],
+    header :contains "Subject" ["% off", "$", "off", "discount", "offer", "sale", "deal", "save", "limited time", "exclusive", "don't miss", "last day", "flash sale", "last chance", "make the switch"],
     
-    # Known promotional senders
-    header :contains ["From"] ["marketing@", "promotion@", "info@", "microsoft-store", "irobot.com", "zagg.com"],
+    # Known promotional senders - adding more based on examples
+    header :contains ["From"] [
+        "marketing@", "promotion@", "info@", "news@", "e.", "email.", 
+        "microsoft-store", "irobot.com", "zagg.com", "ray-ban.com", 
+        "microcenter.com", "hellohelium.com", "autodeskcommunications.com",
+        "adobe.com", "privaterelay.appleid.com"
+    ],
     
     # Has promotional terms in from
-    header :contains ["From"] ["newsletter", "offers", "deals", "promos"]
+    header :contains ["From"] ["newsletter", "offers", "deals", "promos", "update@", "microsoftstore@"],
+    
+    # Specific sender domains from your examples
+    header :contains ["From"] [
+        "autodeskcommunications.com", 
+        "e.ray-ban.com", 
+        "email.microcenter.com", 
+        "e.hellohelium.com", 
+        "privaterelay.appleid.com", 
+        "e.zagg.com", 
+        "email.irobot.com",
+        "microsoftstore.microsoft.com"
+    ]
 ) {
     fileinto "Promotions";
     stop;
@@ -138,10 +165,10 @@ if anyof(
 if anyof(
     # Explicit newsletter indicators
     header :contains ["List-Unsubscribe"] ["*"],
-    header :contains "Subject" ["newsletter", "weekly update", "monthly update", "digest"],
+    header :contains "Subject" ["newsletter", "weekly update", "monthly update", "digest", "New in", "Call for Proposals"],
     
     # Common newsletter senders
-    header :contains ["From"] ["newsletter@", "updates@", "digest@", "weekly@"]
+    header :contains ["From"] ["newsletter@", "updates@", "digest@", "weekly@", "update@"]
 ) {
     fileinto "Newsletters";
     stop;
